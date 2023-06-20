@@ -3,6 +3,7 @@ Add-Type -AssemblyName System.Drawing
 
 $winnings = 0
 $script:count = 20
+$script:totalPlays = 0
 $script:stopSimulation = $false
 
 function Main {
@@ -14,7 +15,7 @@ function AddCounter {
 }
 
 function ApplyUnderline {
-	$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",20,[System.Drawing.FontStyle]([System.Drawing.FontStyle]::Bold.value__ -bor [System.Drawing.FontStyle]::Underline.value__))
+	$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]([System.Drawing.FontStyle]::Bold.value__ -bor [System.Drawing.FontStyle]::Underline.value__))
 }
 
 function Format-MatchingNumbers {
@@ -34,10 +35,10 @@ function Format-MatchingNumbers {
 			ApplyUnderline
 			$RTB.AppendText($drawNumber)
 			$RTB.SelectionColor = 'Black'
-			$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",20,[System.Drawing.FontStyle]::Bold)
+			$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
 			$RTB.AppendText(' ')
 		} else {
-			$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",20,[System.Drawing.FontStyle]::Bold)
+			$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
 			$RTB.AppendText($drawNumber + ' ')
 		}
 	}
@@ -48,7 +49,7 @@ function Format-MatchingNumbers {
 		ApplyUnderline
 		$RTB.AppendText($drawPowerBallNumber)
 		$RTB.SelectionColor = 'Black'
-		$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",20,[System.Drawing.FontStyle]::Bold)
+		$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
 		$RTB.AppendText(' ')
 	} else {
 		$RTB.AppendText($drawPowerBallNumber)
@@ -78,9 +79,10 @@ $Draw9_Array = $drawsArray[8]
 $Draw10_Array = $drawsArray[9]
 
 function Update-WinningNumbersAndAmount {
+    $script:totalPlays++
 	$Win_Array = Generate-PowerBallNumbers
 	$RTB.Clear()
-	$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",20,[System.Drawing.FontStyle]::Bold)
+	$RTB.SelectionFont = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
 	$RTB.AppendText("Winning Numbers: " + ($Win_Array -join ' '))
 	$RTB.AppendText("`r`n")
 	$RTB.AppendText("`r`n")
@@ -90,7 +92,10 @@ function Update-WinningNumbersAndAmount {
 		$whiteBallMatches = @(Compare-Object $Win_Array[0..4] $drawsArray[$i][0..4] -IncludeEqual -ExcludeDifferent).Count
 		$powerBallMatch = $Win_Array[5] -eq $drawsArray[$i][5]
 		$RTB.SelectionColor = "Black"
-		$RTB.AppendText("Draw " + ($i + 1) + ": ")
+		
+        #$RTB.AppendText("Draw " + ($i + 1) + ": ")
+        $RTB.AppendText("Draw {0:D2}: " -f ($i + 1))
+
 		Format-MatchingNumbers -winningNumbers $Win_Array -drawNumbers $drawsArray[$i]
 		$displayResult = ""
 		switch ($whiteBallMatches) {
@@ -155,39 +160,56 @@ function Update-WinningNumbersAndAmount {
 		$RTB.SelectionColor = 'Black'
 		$RTB.AppendText("`r`n")
 	}
+    $RTB.AppendText("`r`n")
 	$RTB.AppendText("Spent = $" + $count + "      Won = $" + $winnings)
+    $RTB.AppendText("`r`n")
+    $ROI = (($winnings - $count) / $count) * 100
+    $RTB.AppendText("              ROI = " + "{0:N2}" -f $ROI + "%")
+    $RTB.AppendText("`r`n")
+    $PositiveROI = 100 + $ROI
+    $RTB.AppendText("Positive ROI = " + "{0:N2}" -f $PositiveROI + "%")
+    $RTB.AppendText("`r`n")
+    $RTB.AppendText("Total Plays: " + $totalPlays)
+
+
 }
 
 function Show-MainForm {
 
 	$Form = New-Object System.Windows.Forms.Form
-	$Form.Size = New-Object System.Drawing.Size (1900,1300)
+	$Form.Size = New-Object System.Drawing.Size (1000,800)
 	$Form.text = "Lottery Simulator"
 
 	$RTB = New-Object System.Windows.Forms.RichTextBox
-	$RTB.Font = New-Object System.Drawing.Font ("Microsoft Sans Serif",40,[System.Drawing.FontStyle]::Bold)
-	$RTB.Location = New-Object System.Drawing.Size (10,100)
-	$RTB.Size = New-Object System.Drawing.Size (1800,900)
+	$RTB.Font = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
+	$RTB.Location = New-Object System.Drawing.Size (20,20)
+	$RTB.Size = New-Object System.Drawing.Size (900,500)
 	$RTB.MultiLine = $True
 	$RTB.ScrollBars = "Vertical"
 
 	$PlayButton = New-Object System.Windows.Forms.Button
 	$PlayButton.Font = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
-	$PlayButton.Location = New-Object System.Drawing.Size (50,1050)
+	$PlayButton.Location = New-Object System.Drawing.Size (20,600)
 	$PlayButton.Size = New-Object System.Drawing.Size (150,80)
 	$PlayButton.text = "Play"
 	$PlayButton.Add_Click({ Update-WinningNumbersAndAmount; AddCounter })
 
 	$PlayUntilJackpotButton = New-Object System.Windows.Forms.Button
-	$PlayUntilJackpotButton.Font = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
-	$PlayUntilJackpotButton.Location = New-Object System.Drawing.Size (450,1050)
-	$PlayUntilJackpotButton.Size = New-Object System.Drawing.Size (350,80)
+	$PlayUntilJackpotButton.Font = New-Object System.Drawing.Font ("Microsoft Sans Serif",10,[System.Drawing.FontStyle]::Bold)
+	$PlayUntilJackpotButton.Location = New-Object System.Drawing.Size (200,600)
+	$PlayUntilJackpotButton.Size = New-Object System.Drawing.Size (300,80)
 	$PlayUntilJackpotButton.text = "Play Until Jackpot or Million"
 	$PlayUntilJackpotButton.Add_Click({ PlayUntilJackpotOrMillion })
 
+    $PlayCountLabel = New-Object System.Windows.Forms.Label
+    $PlayCountLabel.Font = New-Object System.Drawing.Font("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
+    $PlayCountLabel.Location = New-Object System.Drawing.Size(450,1050)
+    $PlayCountLabel.Size = New-Object System.Drawing.Size(300,80)
+    $PlayCountLabel.Text = "Total Plays: 0"
+
 	$ElapsedTimeLabel = New-Object System.Windows.Forms.Label
 	$ElapsedTimeLabel.Font = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
-	$ElapsedTimeLabel.Location = New-Object System.Drawing.Size (850,1050)
+	$ElapsedTimeLabel.Location = New-Object System.Drawing.Size (20,550)
 	$ElapsedTimeLabel.Size = New-Object System.Drawing.Size (350,80)
 	$ElapsedTimeLabel.text = "Elapsed Time: 00:00:00"
 
@@ -224,19 +246,19 @@ function Show-MainForm {
 
 	$StopButton = New-Object System.Windows.Forms.Button
 	$StopButton.Font = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
-	$StopButton.Location = New-Object System.Drawing.Size (1200,1050)
+	$StopButton.Location = New-Object System.Drawing.Size (600,600)
 	$StopButton.Size = New-Object System.Drawing.Size (150,80)
 	$StopButton.text = "Stop"
 	$StopButton.Add_Click({ $script:stopSimulation = $true })
 
 	$CloseButton = New-Object System.Windows.Forms.Button
 	$CloseButton.Font = New-Object System.Drawing.Font ("Microsoft Sans Serif",15,[System.Drawing.FontStyle]::Bold)
-	$CloseButton.Location = New-Object System.Drawing.Size (250,1050)
+	$CloseButton.Location = New-Object System.Drawing.Size (750,600)
 	$CloseButton.Size = New-Object System.Drawing.Size (150,80)
 	$CloseButton.text = "Close"
 	$CloseButton.Add_Click({ $Form.Close() })
 
-	$Form.Controls.AddRange(@($RTB,$Label,$PlayButton,$CloseButton,$PlayUntilJackpotButton,$ElapsedTimeLabel,$StopButton))
+	$Form.Controls.AddRange(@($RTB,$Label,$PlayButton,$CloseButton,$PlayUntilJackpotButton,$PlayCountLabel,$ElapsedTimeLabel,$StopButton))
 	Update-WinningNumbersAndAmount
 	AddCounter
 	$Form.ShowDialog()
